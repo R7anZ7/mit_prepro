@@ -40,4 +40,4 @@ for t in range(timepoints):
 
 print("Completed reorganizing HDF5 files.")
 
-print("successful")
+print("successfully created")
