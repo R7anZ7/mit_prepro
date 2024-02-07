@@ -39,3 +39,5 @@ for t in range(timepoints):
         f.create_dataset('mov', data=data_for_current_timepoint, compression="gzip", compression_opts=9)
 
 print("Completed reorganizing HDF5 files.")
+
+print("successful")
