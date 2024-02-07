@@ -41,3 +41,5 @@ for t in range(timepoints):
 print("Completed reorganizing HDF5 files.")
 
 print("successfully created")
+
+print("test")
