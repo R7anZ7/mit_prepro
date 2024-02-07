@@ -41,3 +41,5 @@ voluseg.step4_detect_cells(parameters)
 
 print("clean cells.")
 voluseg.step5_clean_cells(parameters)
+
+print("finished")
