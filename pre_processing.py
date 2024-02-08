@@ -1,45 +1,44 @@
-import h5py
-import numpy as np
 import os
+import h5py
 
-original_to_new_order = [0, 29, 1, 28, 2, 27, 3, 26, 4, 25, 5, 24, 6, 23, 7, 22, 8, 21, 9, 20, 10, 19, 11, 18, 12, 17, 13, 16, 14, 15]
+# get original order
+original_order = \
+    [0, 29, 1, 28, 2, 27, 3, 26, 4, 25, 5, 24, 6, 23, 7, \
+     22, 8, 21, 9, 20, 10, 19, 11, 18, 12, 17, 13, 16, 14, 15]
 
-new_to_original_order = sorted(range(len(original_to_new_order)), key=lambda k: original_to_new_order[k])
+# number of z planes
+z_dim = len(original_order)
 
-file_path_template = "/data1/rubinov_lab/yantong/project/MIT_dataset/original_data/stitch_layer_{:03d}.hdf5"
+# make paths
+base_path = "/data1/rubinov_lab/yantong/project/MIT_dataset"
+input_path = os.path.join(base_path, "original_data")
+output_path = os.path.join(base_path, "organized_data")
+os.makedirs(output_path, exist_ok=True)
 
-output_path_template = "/data1/rubinov_lab/yantong/project/MIT_dataset/organized_data/timepoint_{:05d}.hdf5"
+# make functions to easily get input and output filenams
+get_input_filename = lambda i: os.path.join(input_path, "stitch_layer_{}.hdf5".format(i))
+get_output_filename = lambda i: os.path.join(output_path, "timepoint_{:05d}.hdf5".format(i))
 
-output_dir = os.path.dirname(output_path_template)
+# get dimensions using first plane dataset
+with h5py.File(get_input_filename(0), "r") as f:
+    t_dim, x_dim, y_dim = f["mov"].shape
 
-os.makedirs(output_dir, exist_ok=True)
+# create empty volumes
+for t in range(t_dim):
+    with h5py.File(get_output_filename(t), "w") as f:
+        f.create_dataset("data", (z_dim, x_dim, y_dim), compression="gzip")
 
-z_planes = len(original_to_new_order)
-timepoints = 6700
-x_dim, y_dim = 505, 1280
-
-for t in range(timepoints):
-
-    data_for_current_timepoint = np.zeros((z_planes, x_dim, y_dim), dtype=np.uint16)
-
-    for z in range(z_planes):
-
-        original_index = new_to_original_order[z]
-
-        file_path = file_path_template.format(original_index)
-
-        with h5py.File(file_path, 'r') as f:
-
-            data_for_current_timepoint[z] = f['mov'][t, :, :]
-
-    output_path = output_path_template.format(t+1)  
-
-    with h5py.File(output_path, 'w') as f:
-
-        f.create_dataset('mov', data=data_for_current_timepoint, compression="gzip", compression_opts=9)
-
+# loop over z planes
+for new_z, old_z in enumerate(original_order):
+    
+    # extract z plane data for all timepoints
+    with h5py.File(get_input_filename(old_z)) as f:
+        z_data = f["mov"][()]
+    
+    # loop over time points
+    for t in range(t_dim):
+        # store timepoint data for individual z planes
+        with h5py.File(get_output_filename(t), "r+") as f:
+            f["data"][new_z] = z_data[t]
+    
 print("Completed reorganizing HDF5 files.")
-
-print("successfully created")
-
-print("test")
